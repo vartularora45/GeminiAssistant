@@ -5,6 +5,7 @@ import com.example.GeminiAssist.demo.Service.AssistantService;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin(origins = "*")
 public class AssistantController {
 
     private final AssistantService assistantService;

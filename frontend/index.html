@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Gemini Assist</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Inter, system-ui, Arial, sans-serif;
+        }
+
+        body {
+            background: #0f0f0f;
+            color: #eaeaea;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: #151515;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 18px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            border-bottom: 1px solid #262626;
+            background: #181818;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            max-width: 75%;
+            line-height: 1.6;
+            padding: 14px 16px;
+            border-radius: 12px;
+            white-space: pre-wrap;
+        }
+
+        .user {
+            background: #2563eb;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot {
+            background: #222;
+            border-bottom-left-radius: 4px;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            padding: 16px;
+            border-top: 1px solid #262626;
+            background: #181818;
+        }
+
+        textarea {
+            flex: 1;
+            background: #0f0f0f;
+            border: 1px solid #2a2a2a;
+            color: #eaeaea;
+            padding: 12px;
+            border-radius: 10px;
+            resize: none;
+            outline: none;
+            font-size: 15px;
+        }
+
+        button {
+            background: #2563eb;
+            border: none;
+            color: white;
+            padding: 0 22px;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .typing {
+            opacity: 0.6;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="chat-container">
+    <div class="header">🤖 Gemini Assist</div>
+
+    <div class="chat-box" id="chatBox"></div>
+
+    <div class="input-area">
+        <textarea id="prompt" rows="2" placeholder="Ask something..."></textarea>
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById("chatBox");
+    const promptInput = document.getElementById("prompt");
+
+    function addMessage(text, type) {
+        const div = document.createElement("div");
+        div.className = `message ${type}`;
+        div.textContent = text;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return div;
+    }
+
+    async function sendMessage() {
+        const prompt = promptInput.value.trim();
+        if (!prompt) return;
+
+        addMessage(prompt, "user");
+        promptInput.value = "";
+
+        const typingMsg = addMessage("Thinking...", "bot typing");
+
+        try {
+            const res = await fetch("http://127.0.0.1:8080/assist", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ prompt })
+            });
+
+            const data = await res.json();
+            typingMsg.remove();
+
+            addMessage(data.response, "bot");
+
+        } catch (err) {
+            typingMsg.remove();
+            addMessage("❌ Error connecting to backend", "bot");
+            console.error(err);
+        }
+    }
+
+    promptInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+</script>
+
+</body>
+</html>
